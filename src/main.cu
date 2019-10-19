@@ -7,19 +7,10 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <cufft.h>
-#include <omp.h>
+//#include <omp.h>
 //#include <mpi.h>
 
 using namespace std;
-
-void u_in_in_big(double* u_in, cufftDoubleComplex* data, int NX, int NY, int multi);
-void h_z(double lam, double z, double k, double sampling, int NX, int NY, cufftDoubleComplex* h_z_cutab);
-void Q_roll(cufftDoubleComplex* u_in_fft, cufftDoubleComplex* data, int NX, int NY);
-void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp);
-int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
-int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
-
-
 
 __global__ void multiplyElementwise(cufftDoubleComplex* f0, cufftDoubleComplex* f1, int size)
 {
@@ -35,6 +26,13 @@ __global__ void multiplyElementwise(cufftDoubleComplex* f0, cufftDoubleComplex* 
         f0[i].y = a*d + b*c;
     }
 }
+
+void u_in_in_big(double* u_in, cufftDoubleComplex* data, int NX, int NY, int multi);
+void h_z(double lam, double z, double k, double sampling, int NX, int NY, cufftDoubleComplex* h_z_cutab);
+void Q_roll(cufftDoubleComplex* u_in_fft, cufftDoubleComplex* data, int NX, int NY);
+void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp);
+int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
+int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
 
 /*
  * complie: nvcc -o prop.x prop.cu -O3 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_60,code=sm_60 -I/usr/local/cuda/inc -L/usr/local/cuda/lib -lcufft -I/opt/openmpi-gcc721-Cuda90/3.1.1/include -Xcompiler "-pthread -fPIC" -Xlinker "-Wl,-rpath -Wl,/opt/openmpi-gcc721-Cuda90/3.1.1/lib -Wl,--enable-new-dtags" -L/opt/openmpi-gcc721-Cuda90/3.1.1/lib -lmpi
@@ -93,7 +91,7 @@ int main(int argc, char *argv[])
 
 	double sampling = 10.0 * pow(10.0, (-6)); 	// Sampling = 10 micro
 	double lam = 633.0 * (pow(10.0,(-9))); 		// Lambda = 633 nm
-	double k = 2.0 * M_PI / lam;			// Wektor falowy k
+	double k = 2.0 * M_PI / lam;				// Wektor falowy k
 	double z_in = 500.0*(pow(10.0,(-3)));		// Odleglosc propagacji = 1 metr
 	double z_out = 1000.0*(pow(10.0,(-3)));
 	double z_delta = 50.0*(pow(10.0,(-3)));
