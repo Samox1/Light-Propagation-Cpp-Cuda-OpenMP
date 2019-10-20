@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	//double z = z_in+(ip*z_delta);             // Odległość Z dla każdego wątku MPI
     double z = z_in;
 
-    printf("k = %.1f | lam = %.1f | z = %.4f mm | ", k, lam*(pow(10.0,(9))), z);
+    printf("k = %.1f | lam = %.1f nm | z = %.4f m | ", k, lam*(pow(10.0,(9))), z);
 	printf(" ");
 
 
