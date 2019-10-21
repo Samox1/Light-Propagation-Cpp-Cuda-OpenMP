@@ -245,117 +245,117 @@ int main(int argc, char *argv[])
 	inputFile.close();
 
 
-
 	int multi = atoi(argv[4]);
 	int NX = COL*multi;
 	int NY = ROW*multi;
 
-// --- Przeliczenie hz --- //
+	// --- Przeliczenie hz --- //
 
-	double sampling = 10.0 * pow(10.0, (-6)); 	// Sampling = 10 micro
-	double lam = 633.0 * (pow(10.0,(-9))); 		// Lambda = 633 nm
-	double k = 2.0 * M_PI / lam;				// Wektor falowy k
-	double z_in = 500.0*(pow(10.0,(-3)));		// Odleglosc propagacji = 0,5 m
-	double z_out = 1000.0*(pow(10.0,(-3)));     // Koniec odległości propagacji = 1 m
-	double z_delta = 50.0*(pow(10.0,(-3)));     // Skok odległości = 0,05 m
-	//double z = z_in+(ip*z_delta);             // Odległość Z dla każdego wątku MPI
+	double sampling = 10.0 * pow(10.0, (-6)); 		// Sampling = 10 micro
+	double lam = 633.0 * (pow(10.0,(-9))); 			// Lambda = 633 nm
+	double k = 2.0 * M_PI / lam;					// Wektor falowy k
+	double z_in = atof(argv[5])*(pow(10.0,(-3)));	// Odleglosc propagacji = 0,5 m
+	double z_out = 1000.0*(pow(10.0,(-3)));     	// Koniec odległości propagacji = 1 m
+	double z_delta = 50.0*(pow(10.0,(-3)));     	// Skok odległości = 0,05 m
+	//double z = z_in+(ip*z_delta);             	// Odległość Z dla każdego wątku MPI
     double z = z_in;
 
     printf("k = %.1f | lam = %.1f nm | z = %.4f m | \n", k, lam*(pow(10.0,(9))), z);
 
 	// --- FFT tablicy wejsciowej --- //
-// 	cufftDoubleComplex* data;
-// 	data = (cufftDoubleComplex *) malloc ( sizeof(cufftDoubleComplex)* NX * NY);
+	cufftDoubleComplex* data;
+	data = (cufftDoubleComplex *) malloc ( sizeof(cufftDoubleComplex)* NX * NY);
 
-// 	cufftDoubleComplex* dData;
-// 	cudaMalloc((void **) &dData, sizeof(cufftDoubleComplex)* NX * NY);
-
-// 	if (cudaGetLastError() != cudaSuccess){
-// 		fprintf(stderr, "Cuda error: Failed to allocate\n");
-// 		return -1;
-// 	}
+	cufftDoubleComplex* dData;
+	cudaMalloc((void **) &dData, sizeof(cufftDoubleComplex)* NX * NY);
 	
-// 	size_t pitch1;
-
-// 	u_in_in_big(u_in, data, NX, NY, multi);
-
-// 	// Liczenie U_in = FFT{u_in}
-//  	cudaMallocPitch(&dData, &pitch1, sizeof(cufftDoubleComplex)*NX, NY);
-// 	cudaMemcpy2D(dData,pitch1,data,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
- 	
-// 	if (cudaGetLastError() != cudaSuccess){
-// 		fprintf(stderr, "Cuda error: Failed to allocate\n");
-// 		return -1;	
-// 	}
-
-// 	if (FFT_Z2Z(dData, NX, NY) == -1) { return -1; }
-// 		cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
-// 	}	
+	if (cudaGetLastError() != cudaSuccess){
+		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		return -1;
+	}
 	
-// // Liczenie hz
+	size_t pitch1;
 
-// 	cufftDoubleComplex* hz_tab;
-// 	hz_tab = (cufftDoubleComplex *) malloc ( sizeof(cufftDoubleComplex)* NX * NY);
-// 	hz(lam, z, k, sampling, NX, NY, hz_tab);	
-
-// // --- Liczenie hz = FFT{hz_tab} --- //
+	u_in_in_big(u_in, data, NX, NY, multi);
 	
-// 	cufftDoubleComplex* hz;
-// 	cudaMalloc((void **) &hz, sizeof(cufftDoubleComplex)* NX * NY);
+	// --- Liczenie U_in = FFT{u_in} --- //
+ 	cudaMallocPitch(&dData, &pitch1, sizeof(cufftDoubleComplex)*NX, NY);
+	cudaMemcpy2D(dData,pitch1,data,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
+	
+	if (cudaGetLastError() != cudaSuccess){
+		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		return -1;	
+	}
+	
+	if (FFT_Z2Z(dData, NX, NY) == -1) { 
+		return -1; 
+	}
+	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
+		
+	
+	// --- Liczenie hz --- //
+	cufftDoubleComplex* hz_tab;
+	hz_tab = (cufftDoubleComplex *) malloc ( sizeof(cufftDoubleComplex)* NX * NY);
+	hz(lam, z, k, sampling, NX, NY, hz_tab);
+			
 
-// 	size_t pitch2;
-//  	cudaMallocPitch(&hz, &pitch2, sizeof(cufftDoubleComplex)*NX, NY);
-// 	cudaMemcpy2D(hz,pitch2,hz_tab,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
+	// --- Liczenie hz = FFT{hz_tab} --- //
+	cufftDoubleComplex* hz;
+	cudaMalloc((void **) &hz, sizeof(cufftDoubleComplex)* NX * NY);
 
-// 	if(cudaGetLastError() != cudaSuccess){
-// 		fprintf(stderr, "Cuda error: Failed to allocate\n");
-// 		return -1;	
-// 	}
+	size_t pitch2;
+ 	cudaMallocPitch(&hz, &pitch2, sizeof(cufftDoubleComplex)*NX, NY);
+	cudaMemcpy2D(hz,pitch2,hz_tab,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
 
-// 	if (FFT_Z2Z(hz, NX, NY) == -1) { return -1; }
+	if(cudaGetLastError() != cudaSuccess){
+		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		return -1;	
+	}
 
-// 	// Do the actual multiplication
+	if (FFT_Z2Z(hz, NX, NY) == -1) { 
+		return -1; 
+	}
 
-// 	multiplyElementwise<<<NX*NY, 1>>>(dData, hz, NX*NY);
+	// --- Do the actual multiplication --- //
+	multiplyElementwise<<<NX*NY, 1>>>(dData, hz, NX*NY);
 	
 
-// // --- Liczenie u_out = iFFT{dData = U_OUT} --- //
+	// --- Liczenie u_out = iFFT{dData = U_OUT} --- //
+	if(IFFT_Z2Z(dData, NX, NY) == -1) { return -1; }
 
-// 	if(IFFT_Z2Z(dData, NX, NY) == -1) { return -1; }
+	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
 
-// 	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
-
-// 	//printf( "\nCUFFT vals: \n");
+	//printf( "\nCUFFT vals: \n");
 	
-// // Czytanie calosci
 
+	// --- ROLL cwiartek, zeby wszystko sie zgadzalo na koniec --- //
 
-// // --- ROLL cwiartek, zeby wszystko sie zgadzalo na koniec --- //
+	cufftDoubleComplex* u_out;
+	u_out = (cufftDoubleComplex *) malloc (sizeof(cufftDoubleComplex)* NX/2 * NY/2);
 
-// 	cufftDoubleComplex* u_out;
-// 	u_out = (cufftDoubleComplex *) malloc (sizeof(cufftDoubleComplex)* NX/2 * NY/2);
+	Qroll(u_out, data, NX, NY);
 
-// 	Qroll(u_out, data, NX, NY);
+	// --- Przeliczanie Amplitudy --- //
 
-// // --- Przeliczanie Amplitudy --- //
+	char filename[128];
+	snprintf ( filename, 128, "result_z_%.5lf.txt", z );
+	FILE* fp = fopen(filename,"w");
 
-// 	char filename[128];
-// 	snprintf ( filename, 128, "result_z_%.5lf.txt", z );
-// 	FILE* fp = fopen(filename,"w");
+	amplitude_print(u_out, NX, NY, fp);
 
-// 	amplitude_print(u_out, NX, NY, fp);
+	fclose(fp);
 
-// 	fclose(fp);
+	// --- Zwalnianie pamieci --- //
 
-// // --- Zwalnianie pamieci --- //
+	cudaFree(u_out);
+	cudaFree(data);
+	cudaFree(dData);
+	cudaFree(hz_tab);
+	cudaFree(hz);
 
-// 	cudaFree(u_out);
-// 	cudaFree(data);
-// 	cudaFree(dData);
-// 	cudaFree(hz_tab);
-// 	cudaFree(hz);
+	free(u_in);
 
-// 	free(u_in);
+	cout << "DEBUG" << endl;
 
 	return 0;
 }
