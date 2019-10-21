@@ -197,10 +197,170 @@ int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 }
 
 
+void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
+{
+  // --- SAVE BMP FILE --- //
+  uint8_t colorIndex = 0;
+  uint16_t color = 0;
+  unsigned int headers[13];
+  int extrabytes;
+  int paddedsize;
+  int x = 0; 
+  int y = 0; 
+  int n = 0;
+  int red = 0;
+  int green = 0;
+  int blue = 0;
+  
+  int WIDTH = NX;
+  int HEIGHT = NY;
+
+  extrabytes = 4 - ((WIDTH * 3) % 4);                 // How many bytes of padding to add to each
+                                                    // horizontal line - the size of which must
+                                                    // be a multiple of 4 bytes.
+  if (extrabytes == 4)
+    extrabytes = 0;
+
+  paddedsize = ((WIDTH * 3) + extrabytes) * HEIGHT;
+
+// Headers...
+// Note that the "BM" identifier in bytes 0 and 1 is NOT included in these "headers".
+
+  headers[0]  = paddedsize + 54;      // bfSize (whole file size)
+  headers[1]  = 0;                    // bfReserved (both)
+  headers[2]  = 54;                   // bfOffbits
+  headers[3]  = 40;                   // biSize
+  headers[4]  = WIDTH;                // biWidth
+  headers[5]  = HEIGHT;               // biHeight
+
+// Would have biPlanes and biBitCount in position 6, but they're shorts.
+// It's easier to write them out separately (see below) than pretend
+// they're a single int, especially with endian issues...
+
+  headers[7]  = 0;                    // biCompression
+  headers[8]  = paddedsize;           // biSizeImage
+  headers[9]  = 0;                    // biXPelsPerMeter
+  headers[10] = 0;                    // biYPelsPerMeter
+  headers[11] = 0;                    // biClrUsed
+  headers[12] = 0;                    // biClrImportant
+
+// outfile = fopen(filename, "wb");
+
+  //File file = fopen("test.bmp", "wb");
+  if (!fp) {
+    Serial.println("There was an error opening the file for writing");
+    //return;
+  }else{
+
+// Headers begin...
+// When printing ints and shorts, we write out 1 character at a time to avoid endian issues.
+
+	fprintf(fp, "BM");
+
+  for (n = 0; n <= 5; n++)
+  { 
+    fprintf(fp, "%c", headers[n] & 0x000000FF);
+    fprintf(fp, "%c", (headers[n] & 0x0000FF00) >> 8);
+    fprintf(fp, "%c", (headers[n] & 0x00FF0000) >> 16);
+    fprintf(fp, "%c", (headers[n] & (unsigned int) 0xFF000000) >> 24);
+  }
+
+// These next 4 characters are for the biPlanes and biBitCount fields.
+
+  fprintf(fp, "%c", 1);
+  fprintf(fp, "%c", 0);
+  fprintf(fp, "%c", 24);
+  fprintf(fp, "%c", 0);
+
+  for (n = 7; n <= 12; n++)
+  {
+    fprintf(fp, "%c", headers[n] & 0x000000FF);
+    fprintf(fp, "%c", (headers[n] & 0x0000FF00) >> 8);
+    fprintf(fp, "%c", (headers[n] & 0x00FF0000) >> 16);
+    fprintf(fp, "%c", (headers[n] & (unsigned int) 0xFF000000) >> 24);
+  }
+
+  	// --- Przeliczanie Amplitudy --- //
+
+	for(int ii=0; ii<(NX*NY/4); ii++)
+	{	
+		u_out[ii].x = sqrt(pow(u_out[ii].x, 2) + pow(u_out[ii].y, 2));
+	}
+	
+	double mini_data = u_in_fft[0].x;
+	
+	for(int ii=0; ii<(NX*NY/4); ii++)
+	{		
+		if (u_in_fft[ii].x < mini_data){ mini_data = u_in_fft[ii].x; }
+	}
+	
+	double max_data = u_in_fft[0].x;
+	mini_data = -mini_data;
+	
+	for(int ii=0; ii<(NX*NY/4); ii++)
+	{		
+		u_in_fft[ii].x = u_in_fft[ii].x + mini_data;
+		if (u_in_fft[ii].x > max_data) { max_data = u_in_fft[ii].x; }
+	}
+
+	for(int ii=0; ii<(NX*NY/4); ii++)
+	{	
+		if (ii%(NX/2) == 0){fprintf (fp,"\n");}
+		u_in_fft[ii].x = u_in_fft[ii].x / max_data * 255.0;
+		fprintf (fp,"%.0f\t", u_in_fft[ii].x);
+	}
+
+
+// Headers done, now write the data...
+
+  for (y = HEIGHT - 1; y >= 0; y--)     // BMP image format is written from bottom to top...
+  {
+    for (x = 0; x <= WIDTH - 1; x++)
+    {
+      // --- Read ColorIndex corresponding to Pixel Temperature --- //
+      colorIndex = map(mlx90640To[x+(32*y)], MinTemp-5.0, MaxTemp+5.0, 0, 255);
+      colorIndex = constrain(colorIndex, 0, 255);
+      color = camColors[colorIndex];
+      
+      // --- Converts 4 Digits HEX to RGB565 --- //
+      // uint8_t r = ((color >> 11) & 0x1F);
+      // uint8_t g = ((color >> 5) & 0x3F);
+      // uint8_t b = (color & 0x1F);
+
+      // --- Converts 4 Digits HEX to RGB565 -> RGB888 --- //
+      red = ((((color >> 11) & 0x1F) * 527) + 23) >> 6;
+      green = ((((color >> 5) & 0x3F) * 259) + 33) >> 6;
+      blue = (((color & 0x1F) * 527) + 23) >> 6;
+
+      // --- RGB range from 0 to 255 --- //
+      if (red > 255) red = 255; if (red < 0) red = 0;
+      if (green > 255) green = 255; if (green < 0) green = 0;
+      if (blue > 255) blue = 255; if (blue < 0) blue = 0;
+
+      // Also, it's written in (b,g,r) format...
+
+      file.printf("%c", blue);
+      file.printf("%c", green);
+      file.printf("%c", red);
+    }
+    if (extrabytes)      // See above - BMP lines must be of lengths divisible by 4.
+    {
+      for (n = 1; n <= extrabytes; n++)
+      {
+         file.printf("%c", 0);
+      }
+    }
+  }
+
+  file.close();
+  Serial.println("File Closed");
+  }         // --- END SAVING BMP FILE --- //
+}
+
+
 /*
- * complie: nvcc -o prop.x prop.cu -O3 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_60,code=sm_60 -I/usr/local/cuda/inc -L/usr/local/cuda/lib -lcufft -I/opt/openmpi-gcc721-Cuda90/3.1.1/include -Xcompiler "-pthread -fPIC" -Xlinker "-Wl,-rpath -Wl,/opt/openmpi-gcc721-Cuda90/3.1.1/lib -Wl,--enable-new-dtags" -L/opt/openmpi-gcc721-Cuda90/3.1.1/lib -lmpi
- * compile: nvcc -o prop.x prop.cu -O3 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_60,code=sm_60 -I/usr/local/cuda/inc -L/usr/local/cuda/lib -lcufft -I/opt/openmpi-gcc721-Cuda90/3.1.1/include -Xcompiler "-pthread -fPIC" -L/opt/openmpi-gcc721-Cuda90/3.1.1/lib -lmpi
- * start program: ./prop.x Tablica-1024x1024.txt 1024 1024 > 1024x1024.txt
+ * start program: ./cudaOpenMP Tablica-1024x1024.txt 1024 1024 1 500.0 633.0
+ * start program: ./cudaOpenMP plik_z_przezroczem.txt COL ROW Multiply Odleglosc_Z_mm Dl_fali_Lambda_nm
  */
 
 
@@ -213,16 +373,16 @@ int main(int argc, char *argv[])
 
     int COL = atoi(argv[2]);
 	int ROW = atoi(argv[3]);
+
 	//int COL = 1024;
 	//int ROW = 1024;
 	//double u_in[ROW*COL];
 	//cout << "DEBUG" << endl;
+
 	double* u_in;
 	u_in = (double *) malloc ( sizeof(double)* COL * ROW);
 
-	//cout << "DUPA WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << endl;
-	cout << "DUPA WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << endl;
-	//cout << "ROW: " << ROW << " | " << "COL: " << COL <<endl;
+	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << " | " << atoi(argv[6]) << endl;
 
 	ifstream inputFile;
     inputFile.open(argv[1]);
@@ -252,7 +412,7 @@ int main(int argc, char *argv[])
 	// --- Przeliczenie hz --- //
 
 	double sampling = 10.0 * pow(10.0, (-6)); 		// Sampling = 10 micro
-	double lam = 633.0 * (pow(10.0,(-9))); 			// Lambda = 633 nm
+	double lam = atof(argv[6]) * (pow(10.0,(-9))); 			// Lambda = 633 nm
 	double k = 2.0 * M_PI / lam;					// Wektor falowy k
 	double z_in = atof(argv[5])*(pow(10.0,(-3)));	// Odleglosc propagacji = 0,5 m
 	double z_out = 1000.0*(pow(10.0,(-3)));     	// Koniec odległości propagacji = 1 m
@@ -338,8 +498,8 @@ int main(int argc, char *argv[])
 	// --- Przeliczanie Amplitudy --- //
 
 	char filename[128];
-	snprintf ( filename, 128, "result_z_%.5lf.txt", z );
-	FILE* fp = fopen(filename,"w");
+	snprintf ( filename, 128, "result_z_%.5lf.BMP", z );
+	FILE* fp = fopen(filename,"wb");
 
 	amplitude_print(u_out, NX, NY, fp);
 
@@ -355,7 +515,7 @@ int main(int argc, char *argv[])
 
 	free(u_in);
 
-	cout << "DEBUG" << endl;
+	//cout << "DEBUG" << endl;
 
 	return 0;
 }
