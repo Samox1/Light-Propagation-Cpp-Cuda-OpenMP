@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <cufft.h>
-//#include <omp.h>
+#include <omp.h>
 //#include <mpi.h>
 
 using namespace std;
@@ -113,6 +113,7 @@ void Qroll(cufftDoubleComplex* u_in_fft, cufftDoubleComplex* data, int NX, int N
 	}
 }
 
+
 void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp)
 {
 	// --- Przeliczanie Amplitudy --- //
@@ -145,9 +146,8 @@ void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp)
 		fprintf (fp,"%.0f\t", u_in_fft[ii].x);
 	}
 }
-																					// --- ERROR --- Undefined Reference to 'cufftPlan2D' & 'cufftExecZ2Z' & 'cufftDestroy'
-																					// --- Nie widzi CUFFT z Cuda
-																					// --- Nie było flagi -lcufft podczas kompilacji - jej...
+
+
 int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 {
 	// Create a 2D FFT plan. 
@@ -171,6 +171,7 @@ int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 	cufftDestroy(plan1);
 	return err;
 }
+
 
 int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 {
@@ -197,11 +198,11 @@ int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 }
 
 
-void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
+void BMP_Save_Amplitude(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
 {
   // --- SAVE BMP FILE --- //
-  uint8_t colorIndex = 0;
-  uint16_t color = 0;
+  //uint8_t colorIndex = 0;
+  //uint16_t color = 0;
   unsigned int headers[13];
   int extrabytes;
   int paddedsize;
@@ -212,8 +213,8 @@ void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
   int green = 0;
   int blue = 0;
   
-  int WIDTH = NX;
-  int HEIGHT = NY;
+  int WIDTH = NX/2;
+  int HEIGHT = NY/2;
 
   extrabytes = 4 - ((WIDTH * 3) % 4);                 // How many bytes of padding to add to each
                                                     // horizontal line - the size of which must
@@ -248,7 +249,7 @@ void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
 
   //File file = fopen("test.bmp", "wb");
   if (!fp) {
-    Serial.println("There was an error opening the file for writing");
+    cout << "There was an error opening the file for writing";
     //return;
   }else{
 
@@ -287,27 +288,27 @@ void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
 		u_out[ii].x = sqrt(pow(u_out[ii].x, 2) + pow(u_out[ii].y, 2));
 	}
 	
-	double mini_data = u_in_fft[0].x;
+	double mini_data = u_out[0].x;
 	
 	for(int ii=0; ii<(NX*NY/4); ii++)
 	{		
-		if (u_in_fft[ii].x < mini_data){ mini_data = u_in_fft[ii].x; }
+		if (u_out[ii].x < mini_data){ mini_data = u_out[ii].x; }
 	}
 	
-	double max_data = u_in_fft[0].x;
+	double max_data = u_out[0].x;
 	mini_data = -mini_data;
 	
 	for(int ii=0; ii<(NX*NY/4); ii++)
 	{		
-		u_in_fft[ii].x = u_in_fft[ii].x + mini_data;
-		if (u_in_fft[ii].x > max_data) { max_data = u_in_fft[ii].x; }
+		u_out[ii].x = u_out[ii].x + mini_data;
+		if (u_out[ii].x > max_data) { max_data = u_out[ii].x; }
 	}
 
 	for(int ii=0; ii<(NX*NY/4); ii++)
 	{	
-		if (ii%(NX/2) == 0){fprintf (fp,"\n");}
-		u_in_fft[ii].x = u_in_fft[ii].x / max_data * 255.0;
-		fprintf (fp,"%.0f\t", u_in_fft[ii].x);
+		//if (ii%(NX/2) == 0){fprintf (fp,"\n");}
+		u_out[ii].x = u_out[ii].x / max_data * 255.0;
+		//fprintf (fp,"%.0f\t", u_in_fft[ii].x);
 	}
 
 
@@ -317,43 +318,34 @@ void BMP_Save(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
   {
     for (x = 0; x <= WIDTH - 1; x++)
     {
-      // --- Read ColorIndex corresponding to Pixel Temperature --- //
-      colorIndex = map(mlx90640To[x+(32*y)], MinTemp-5.0, MaxTemp+5.0, 0, 255);
-      colorIndex = constrain(colorIndex, 0, 255);
-      color = camColors[colorIndex];
-      
-      // --- Converts 4 Digits HEX to RGB565 --- //
-      // uint8_t r = ((color >> 11) & 0x1F);
-      // uint8_t g = ((color >> 5) & 0x3F);
-      // uint8_t b = (color & 0x1F);
 
-      // --- Converts 4 Digits HEX to RGB565 -> RGB888 --- //
-      red = ((((color >> 11) & 0x1F) * 527) + 23) >> 6;
-      green = ((((color >> 5) & 0x3F) * 259) + 33) >> 6;
-      blue = (((color & 0x1F) * 527) + 23) >> 6;
+		red = u_out[x+(NX/2*y)].x;
+		if (red > 255) red = 255; if (red < 0) red = 0;
 
-      // --- RGB range from 0 to 255 --- //
-      if (red > 255) red = 255; if (red < 0) red = 0;
-      if (green > 255) green = 255; if (green < 0) green = 0;
-      if (blue > 255) blue = 255; if (blue < 0) blue = 0;
+		green = red;
+		blue = red;
 
-      // Also, it's written in (b,g,r) format...
+      	// --- RGB range from 0 to 255 --- //
+      	// if (red > 255) red = 255; if (red < 0) red = 0;
+      	// if (green > 255) green = 255; if (green < 0) green = 0;
+      	// if (blue > 255) blue = 255; if (blue < 0) blue = 0;
 
-      file.printf("%c", blue);
-      file.printf("%c", green);
-      file.printf("%c", red);
+      	// Also, it's written in (b,g,r) format...
+      	fprintf (fp, "%c", blue);
+      	fprintf (fp, "%c", green);
+      	fprintf (fp, "%c", red);
     }
     if (extrabytes)      // See above - BMP lines must be of lengths divisible by 4.
     {
-      for (n = 1; n <= extrabytes; n++)
-      {
-         file.printf("%c", 0);
-      }
+      	for (n = 1; n <= extrabytes; n++)
+      	{
+			fprintf (fp, "%c", 0);
+      	}
     }
   }
 
-  file.close();
-  Serial.println("File Closed");
+  //fclose(fp);
+  cout << "Writing to BMP complete!" << endl;
   }         // --- END SAVING BMP FILE --- //
 }
 
@@ -384,6 +376,30 @@ int main(int argc, char *argv[])
 
 	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << " | " << atoi(argv[6]) << endl;
 
+	printf("\n---------------------------\n");
+	// --- PC Specs finder --- //
+
+	int num_gpus = 0;   					// number of CUDA GPUs
+	cudaGetDeviceCount(&num_gpus);
+	if (num_gpus < 1)
+    {
+        printf("no CUDA capable devices were detected\n");
+        return 1;
+    }
+	printf("Number of host CPUs:\t%d\n", omp_get_num_procs());
+    printf("Number of CUDA devices:\t%d\n", num_gpus);
+
+    for (int i = 0; i < num_gpus; i++)
+    {
+        cudaDeviceProp dprop;
+        cudaGetDeviceProperties(&dprop, i);
+        printf("   %d: %s\n", i, dprop.name);
+    }
+
+    printf("---------------------------\n\n");
+
+
+
 	ifstream inputFile;
     inputFile.open(argv[1]);
 
@@ -412,7 +428,7 @@ int main(int argc, char *argv[])
 	// --- Przeliczenie hz --- //
 
 	double sampling = 10.0 * pow(10.0, (-6)); 		// Sampling = 10 micro
-	double lam = atof(argv[6]) * (pow(10.0,(-9))); 			// Lambda = 633 nm
+	double lam = atof(argv[6]) * (pow(10.0,(-9))); 	// Lambda = 633 nm
 	double k = 2.0 * M_PI / lam;					// Wektor falowy k
 	double z_in = atof(argv[5])*(pow(10.0,(-3)));	// Odleglosc propagacji = 0,5 m
 	double z_out = 1000.0*(pow(10.0,(-3)));     	// Koniec odległości propagacji = 1 m
@@ -420,7 +436,8 @@ int main(int argc, char *argv[])
 	//double z = z_in+(ip*z_delta);             	// Odległość Z dla każdego wątku MPI
     double z = z_in;
 
-    printf("k = %.1f | lam = %.1f nm | z = %.4f m | \n", k, lam*(pow(10.0,(9))), z);
+    printf("\n| k = %.1f | Lambda = %.1f nm | Z = %.4f m | Sampling = %.3f micro | Tablica tymczasowa = x%i |\n\n", k, lam*(pow(10.0,(9))), z, sampling*pow(10.0,(6)), multi);
+
 
 	// --- FFT tablicy wejsciowej --- //
 	cufftDoubleComplex* data;
@@ -430,7 +447,7 @@ int main(int argc, char *argv[])
 	cudaMalloc((void **) &dData, sizeof(cufftDoubleComplex)* NX * NY);
 	
 	if (cudaGetLastError() != cudaSuccess){
-		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		fprintf(stderr, "Cuda error: Failed to allocate: Allocate Cuda Memory\n");
 		return -1;
 	}
 	
@@ -443,7 +460,7 @@ int main(int argc, char *argv[])
 	cudaMemcpy2D(dData,pitch1,data,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
 	
 	if (cudaGetLastError() != cudaSuccess){
-		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		fprintf(stderr, "Cuda error: Failed to allocate: Calculate FFT{u_in}\n");
 		return -1;	
 	}
 	
@@ -468,7 +485,7 @@ int main(int argc, char *argv[])
 	cudaMemcpy2D(hz,pitch2,hz_tab,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
 
 	if(cudaGetLastError() != cudaSuccess){
-		fprintf(stderr, "Cuda error: Failed to allocate\n");
+		fprintf(stderr, "Cuda error: Failed to allocate: FFT{hz_tab}\n");
 		return -1;	
 	}
 
@@ -498,10 +515,11 @@ int main(int argc, char *argv[])
 	// --- Przeliczanie Amplitudy --- //
 
 	char filename[128];
-	snprintf ( filename, 128, "result_z_%.5lf.BMP", z );
+	snprintf ( filename, 128, "z_%.3lf-m_lam_%.1lf-nm.BMP", z, lam*(pow(10.0,(9))));
 	FILE* fp = fopen(filename,"wb");
 
-	amplitude_print(u_out, NX, NY, fp);
+	//amplitude_print(u_out, NX, NY, fp);
+	BMP_Save_Amplitude(u_out, NX, NY, fp);
 
 	fclose(fp);
 
