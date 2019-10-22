@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
 	//double z = z_in+(ip*z_delta);             	// Odległość Z dla każdego wątku MPI
     double z = z_in;
 
-    printf("\n| k = %.1f | Lambda = %.1f nm | Z = %.4f m | Sampling = %.3f micro | Tablica tymczasowa = x%i |\n\n", k, lam*(pow(10.0,(9))), z, sampling*pow(10.0,(6)), multi);
+    printf("\nVariables | k = %.1f | Lambda = %.1f nm | Z = %.4f m | Sampling = %.3f micro | Tablica tymczasowa = x%i |\n\n", k, lam*(pow(10.0,(9))), z, sampling*pow(10.0,(6)), multi);
 
 
 	// --- FFT tablicy wejsciowej --- //
