@@ -10,9 +10,23 @@
 #include <omp.h>
 //#include <mpi.h>
 
+#define DATA_OFFSET_OFFSET 0x000A
+#define WIDTH_OFFSET 0x0012
+#define HEIGHT_OFFSET 0x0016
+#define BITS_PER_PIXEL_OFFSET 0x001C
+#define HEADER_SIZE 14
+#define INFO_HEADER_SIZE 40
+#define NO_COMPRESION 0
+#define MAX_NUMBER_OF_COLORS 0
+#define ALL_COLORS_REQUIRED 0
+
+
 using namespace std;
 
 const std::complex<double> i1(0, 1);
+typedef unsigned int int32;
+typedef short int16;
+typedef unsigned char byte;
 
 
 __global__ void multiplyElementwise(cufftDoubleComplex* f0, cufftDoubleComplex* f1, int size)
@@ -350,9 +364,44 @@ void BMP_Save_Amplitude(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
 }
 
 
+void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, int32 *bytesPerPixel)
+{
+        FILE *imageFile = fopen(fileName, "rb");
+        int32 dataOffset;
+        fseek(imageFile, DATA_OFFSET_OFFSET, SEEK_SET);
+        fread(&dataOffset, 4, 1, imageFile);
+        fseek(imageFile, WIDTH_OFFSET, SEEK_SET);
+        fread(width, 4, 1, imageFile);
+        fseek(imageFile, HEIGHT_OFFSET, SEEK_SET);
+        fread(height, 4, 1, imageFile);
+        int16 bitsPerPixel;
+        fseek(imageFile, BITS_PER_PIXEL_OFFSET, SEEK_SET);
+        fread(&bitsPerPixel, 2, 1, imageFile);
+        *bytesPerPixel = ((int32)bitsPerPixel) / 8;
+ 
+        int paddedRowSize = (int)(4 * ceil((float)(*width) / 4.0f))*(*bytesPerPixel);
+        int unpaddedRowSize = (*width)*(*bytesPerPixel);
+		int totalSize = unpaddedRowSize*(*height);
+		cout << "BMP FILE: " << fileName << " | Width: " << *width << " | Height: " << *height << " | Total Size: " << totalSize << " | BitsPerPixel: " << bitsPerPixel << endl;
+		
+		*pixels = (byte*)malloc(totalSize);
+        int i = 0;
+        byte *currentRowPointer = *pixels+((*height-1)*unpaddedRowSize);
+        for (i = 0; i < *height; i++)
+        {
+                fseek(imageFile, dataOffset+(i*paddedRowSize), SEEK_SET);
+            fread(currentRowPointer, 1, unpaddedRowSize, imageFile);
+            currentRowPointer -= unpaddedRowSize;
+        }
+		
+
+        fclose(imageFile);
+}
+
+
 /*
- * start program: ./cudaOpenMP Tablica-1024x1024.txt 1024 1024 1 500.0 633.0
- * start program: ./cudaOpenMP plik_z_przezroczem.txt COL ROW Multiply Odleglosc_Z_mm Dl_fali_Lambda_nm
+ * start program: ./cudaOpenMP Tablica-1024x1024.txt 1024 1024 1 500.0 633.0 10.0
+ * start program: ./cudaOpenMP plik_z_przezroczem.txt COL ROW Multiply Odleglosc_Z_mm Dl_fali_Lambda_nm Sampling_micro
  */
 
 
@@ -374,7 +423,7 @@ int main(int argc, char *argv[])
 	double* u_in;
 	u_in = (double *) malloc ( sizeof(double)* COL * ROW);
 
-	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << " | " << atoi(argv[6]) << endl;
+	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << " | " << atoi(argv[6]) << " | " << atoi(argv[7]) << endl;
 
 	printf("\n---------------------------\n");
 	// --- PC Specs finder --- //
@@ -398,8 +447,16 @@ int main(int argc, char *argv[])
 
     printf("---------------------------\n\n");
 
+	// --- Import BMP image --- //
+	byte *pixels;
+    int32 width;
+    int32 height;
+    int32 bytesPerPixel;
+	ReadImage( argv[8], &pixels, &width, &height,&bytesPerPixel);
+	//cout << *pixels;
+	free(pixels);
 
-
+	// --- Import TXT file with image --- //
 	ifstream inputFile;
     inputFile.open(argv[1]);
 
@@ -427,7 +484,7 @@ int main(int argc, char *argv[])
 
 	// --- Przeliczenie hz --- //
 
-	double sampling = 10.0 * pow(10.0, (-6)); 		// Sampling = 10 micro
+	double sampling = atof(argv[7]) * pow(10.0, (-6)); 		// Sampling = 10 micro
 	double lam = atof(argv[6]) * (pow(10.0,(-9))); 	// Lambda = 633 nm
 	double k = 2.0 * M_PI / lam;					// Wektor falowy k
 	double z_in = atof(argv[5])*(pow(10.0,(-3)));	// Odleglosc propagacji = 0,5 m
