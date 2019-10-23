@@ -400,8 +400,8 @@ void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, 
 
 
 /*
- * start program: ./cudaOpenMP Tablica-1024x1024.txt 1024 1024 1 500.0 633.0 10.0
- * start program: ./cudaOpenMP plik_z_przezroczem.txt COL ROW Multiply Odleglosc_Z_mm Dl_fali_Lambda_nm Sampling_micro
+ * start program: ./cudaOpenMP Test_NTO_1024.bmp 2 500.0 633.0 10.0
+ * start program: ./cudaOpenMP plik_z_przezroczem.BMP  Multiply_tmp  Odleglosc_Z_mm  Dl_fali_Lambda_nm  Sampling_micro
  */
 
 
