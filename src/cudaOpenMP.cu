@@ -412,18 +412,13 @@ int main(int argc, char *argv[])
 
     cout << "Welcome to CUDA test" << endl;
 
-    int COL = atoi(argv[2]);
-	int ROW = atoi(argv[3]);
+    //int COL = atoi(argv[2]);
+	//int ROW = atoi(argv[3]);
 
-	//int COL = 1024;
-	//int ROW = 1024;
-	//double u_in[ROW*COL];
-	//cout << "DEBUG" << endl;
+	//double* u_in;
+	//u_in = (double *) malloc ( sizeof(double)* COL * ROW);
 
-	double* u_in;
-	u_in = (double *) malloc ( sizeof(double)* COL * ROW);
-
-	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << " | " << atoi(argv[6]) << " | " << atoi(argv[7]) << endl;
+	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << endl;
 
 	printf("\n---------------------------\n");
 	// --- PC Specs finder --- //
@@ -452,11 +447,11 @@ int main(int argc, char *argv[])
     int32 width;
     int32 height;
     int32 bytesPerPixel;
-	ReadImage( argv[8], &pixels, &width, &height,&bytesPerPixel);
+	ReadImage(argv[1], &pixels, &width, &height,&bytesPerPixel);
 
-	byte* Image_Red = (byte *) malloc ( sizeof(byte)* width * height);
-	byte* Image_Green = (byte *) malloc ( sizeof(byte)* width * height);
-	byte* Image_Blue = (byte *) malloc ( sizeof(byte)* width * height);
+	double* Image_Red = (double *) malloc ( sizeof(double)* width * height);
+	double* Image_Green = (double *) malloc ( sizeof(double)* width * height);
+	double* Image_Blue = (double *) malloc ( sizeof(double)* width * height);
 
 	int iterator = 0;
 	for(int i=0; i<(height*width)*3; i+=3)
@@ -469,41 +464,44 @@ int main(int argc, char *argv[])
 
 	free(pixels);
 
+	int32 COL = width;
+	int32 ROW = height;
+
 	// --- Import TXT file with image --- //
-	ifstream inputFile;
-    inputFile.open(argv[1]);
+	// ifstream inputFile;
+    // inputFile.open(argv[1]);
 
-    if (inputFile)
-	{
-		cout << "Import file: " << argv[1] << endl;
-		int i,j = 0;
-		for (i = 0; i < ROW; i++)
-		{
-			for (j = 0; j < COL; j++)
-			{
-				inputFile >> u_in[i*ROW+j];
-			}
-		}
-		cout << "Import file - complete" << endl;
-	} else {
-		cout << "Error opening the file.\n";
-	}
-	inputFile.close();
+    // if (inputFile)
+	// {
+	// 	cout << "Import file: " << argv[1] << endl;
+	// 	int i,j = 0;
+	// 	for (i = 0; i < ROW; i++)
+	// 	{
+	// 		for (j = 0; j < COL; j++)
+	// 		{
+	// 			inputFile >> u_in[i*ROW+j];
+	// 		}
+	// 	}
+	// 	cout << "Import file - complete" << endl;
+	// } else {
+	// 	cout << "Error opening the file.\n";
+	// }
+	// inputFile.close();
 
 
-	int multi = atoi(argv[4]);
+	int multi = atoi(argv[2]);
 	int NX = COL*multi;
 	int NY = ROW*multi;
 
 	// --- Przeliczenie hz --- //
 
-	double sampling = atof(argv[7]) * pow(10.0, (-6)); 		// Sampling = 10 micro
-	double lam = atof(argv[6]) * (pow(10.0,(-9))); 	// Lambda = 633 nm
-	double k = 2.0 * M_PI / lam;					// Wektor falowy k
-	double z_in = atof(argv[5])*(pow(10.0,(-3)));	// Odleglosc propagacji = 0,5 m
-	double z_out = 1000.0*(pow(10.0,(-3)));     	// Koniec odległości propagacji = 1 m
-	double z_delta = 50.0*(pow(10.0,(-3)));     	// Skok odległości = 0,05 m
-	//double z = z_in+(ip*z_delta);             	// Odległość Z dla każdego wątku MPI
+	double sampling = atof(argv[5]) * pow(10.0, (-6)); 	// Sampling = 10 micro
+	double lam = atof(argv[4]) * (pow(10.0,(-9))); 		// Lambda = 633 nm
+	double k = 2.0 * M_PI / lam;						// Wektor falowy k
+	double z_in = atof(argv[3])*(pow(10.0,(-3)));		// Odleglosc propagacji = 0,5 m
+	double z_out = 1000.0*(pow(10.0,(-3)));     		// Koniec odległości propagacji = 1 m
+	double z_delta = 50.0*(pow(10.0,(-3)));     		// Skok odległości = 0,05 m
+	//double z = z_in+(ip*z_delta);             		// Odległość Z dla każdego wątku MPI
     double z = z_in;
 
     printf("\nVariables | k = %.1f | Lambda = %.1f nm | Z = %.4f m | Sampling = %.3f micro | Tablica tymczasowa = x%i |\n\n", k, lam*(pow(10.0,(9))), z, sampling*pow(10.0,(6)), multi);
@@ -523,7 +521,8 @@ int main(int argc, char *argv[])
 
 	size_t pitch1;
 
-	u_in_in_big(u_in, data, NX, NY, multi);
+	// --- Wpisanie tablicy wejsciowej do wiekszej tablicy tymczasowej --- //
+	u_in_in_big(Image_Green, data, NX, NY, multi);			// Poki co 'Image_Green' jako tablica wejsciowa
 
 	// --- Liczenie U_in = FFT{u_in} --- //
  	cudaMallocPitch(&dData, &pitch1, sizeof(cufftDoubleComplex)*NX, NY);
@@ -569,41 +568,36 @@ int main(int argc, char *argv[])
 
 	// --- Liczenie u_out = iFFT{dData = U_OUT} --- //
 	if(IFFT_Z2Z(dData, NX, NY) == -1) { return -1; }
-
 	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
 
-	//printf( "\nCUFFT vals: \n");
-
-
 	// --- ROLL cwiartek, zeby wszystko sie zgadzalo na koniec --- //
-
 	cufftDoubleComplex* u_out;
 	u_out = (cufftDoubleComplex *) malloc (sizeof(cufftDoubleComplex)* NX/2 * NY/2);
 
 	Qroll(u_out, data, NX, NY);
 
-	// --- Przeliczanie Amplitudy --- //
-
+	
+	// --- Zapis do pliku BMP --- //
 	char filename[128];
 	snprintf ( filename, 128, "z_%.3lf-m_lam_%.1lf-nm.BMP", z, lam*(pow(10.0,(9))));
 	FILE* fp = fopen(filename,"wb");
-
+	
+	// --- Przeliczanie Amplitudy i Zapis do pliku --- //
 	//amplitude_print(u_out, NX, NY, fp);
 	BMP_Save_Amplitude(u_out, NX, NY, fp);
 
 	fclose(fp);
 
 	// --- Zwalnianie pamieci --- //
-
 	cudaFree(u_out);
 	cudaFree(data);
 	cudaFree(dData);
 	cudaFree(hz_tab);
 	cudaFree(hz);
 
-	free(u_in);
-
-	//cout << "DEBUG" << endl;
+	free(Image_Red);
+	free(Image_Green);
+	free(Image_Blue);
 
 	return 0;
 }
