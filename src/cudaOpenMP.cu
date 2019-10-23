@@ -92,8 +92,8 @@ void hz(double lam, double z, double k, double sampling, int NX, int NY, cufftDo
 	teta = k / (2.0 * z);
 	lam_z = lam * z;
 	double quad = 0.0;
-	double teta1 = 0.0;	
-	
+	double teta1 = 0.0;
+
 
 	for(int iy=0; iy < NY; iy++)
 	{
@@ -108,7 +108,7 @@ void hz(double lam, double z, double k, double sampling, int NX, int NY, cufftDo
 			hz_cutab[iy*NX+ix].y = hz_tab[iy*NX+ix].imag();
 			//printf("%.2f\t", hz_cutab[iy*NX+ix].x);
 		}
-	}	
+	}
 	free(hz_tab);
 }
 
@@ -133,28 +133,28 @@ void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp)
 	// --- Przeliczanie Amplitudy --- //
 
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{	
+	{
 		u_in_fft[ii].x = sqrt(pow(u_in_fft[ii].x, 2) + pow(u_in_fft[ii].y, 2));
 	}
-	
+
 	double mini_data = u_in_fft[0].x;
-	
+
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{		
+	{
 		if (u_in_fft[ii].x < mini_data){ mini_data = u_in_fft[ii].x; }
 	}
-	
+
 	double max_data = u_in_fft[0].x;
 	mini_data = -mini_data;
-	
+
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{		
+	{
 		u_in_fft[ii].x = u_in_fft[ii].x + mini_data;
 		if (u_in_fft[ii].x > max_data) { max_data = u_in_fft[ii].x; }
 	}
 
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{	
+	{
 		if (ii%(NX/2) == 0){fprintf (fp,"\n");}
 		u_in_fft[ii].x = u_in_fft[ii].x / max_data * 255.0;
 		fprintf (fp,"%.0f\t", u_in_fft[ii].x);
@@ -164,24 +164,24 @@ void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp)
 
 int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 {
-	// Create a 2D FFT plan. 
+	// Create a 2D FFT plan.
 	int err = 0;
 	cufftHandle plan1;
 	if (cufftPlan2d(&plan1, NX, NY, CUFFT_Z2Z) != CUFFT_SUCCESS){
 		fprintf(stderr, "CUFFT Error: Unable to create plan\n");
-		err = -1;	
+		err = -1;
 	}
 
 	if (cufftExecZ2Z(plan1, dData, dData, CUFFT_FORWARD) != CUFFT_SUCCESS){
 		fprintf(stderr, "CUFFT Error: Unable to execute plan\n");
-		err = -1;		
+		err = -1;
 	}
 
 	if (cudaDeviceSynchronize() != cudaSuccess){
   		fprintf(stderr, "Cuda error: Failed to synchronize\n");
    		err = -1;
-	}	
-	
+	}
+
 	cufftDestroy(plan1);
 	return err;
 }
@@ -190,16 +190,16 @@ int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
 {
 	// Create a 2D FFT plan.
-	int err = 0; 
+	int err = 0;
 	cufftHandle plan1;
 	if (cufftPlan2d(&plan1, NX, NY, CUFFT_Z2Z) != CUFFT_SUCCESS){
 		fprintf(stderr, "CUFFT Error: Unable to create plan\n");
-		err = -1;	
+		err = -1;
 	}
 
 	if (cufftExecZ2Z(plan1, dData, dData, CUFFT_INVERSE) != CUFFT_SUCCESS){
 		fprintf(stderr, "CUFFT Error: Unable to execute plan\n");
-		err = -1;		
+		err = -1;
 	}
 
 	if (cudaDeviceSynchronize() != cudaSuccess){
@@ -207,7 +207,7 @@ int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY)
    		err = -1;
 	}
 
-	cufftDestroy(plan1);	
+	cufftDestroy(plan1);
 	return err;
 }
 
@@ -220,13 +220,13 @@ void BMP_Save_Amplitude(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
   unsigned int headers[13];
   int extrabytes;
   int paddedsize;
-  int x = 0; 
-  int y = 0; 
+  int x = 0;
+  int y = 0;
   int n = 0;
   int red = 0;
   int green = 0;
   int blue = 0;
-  
+
   int WIDTH = NX/2;
   int HEIGHT = NY/2;
 
@@ -273,7 +273,7 @@ void BMP_Save_Amplitude(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
 	fprintf(fp, "BM");
 
   for (n = 0; n <= 5; n++)
-  { 
+  {
     fprintf(fp, "%c", headers[n] & 0x000000FF);
     fprintf(fp, "%c", (headers[n] & 0x0000FF00) >> 8);
     fprintf(fp, "%c", (headers[n] & 0x00FF0000) >> 16);
@@ -298,28 +298,28 @@ void BMP_Save_Amplitude(cufftDoubleComplex* u_out, int NX, int NY, FILE* fp)
   	// --- Przeliczanie Amplitudy --- //
 
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{	
+	{
 		u_out[ii].x = sqrt(pow(u_out[ii].x, 2) + pow(u_out[ii].y, 2));
 	}
-	
+
 	double mini_data = u_out[0].x;
-	
+
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{		
+	{
 		if (u_out[ii].x < mini_data){ mini_data = u_out[ii].x; }
 	}
-	
+
 	double max_data = u_out[0].x;
 	mini_data = -mini_data;
-	
+
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{		
+	{
 		u_out[ii].x = u_out[ii].x + mini_data;
 		if (u_out[ii].x > max_data) { max_data = u_out[ii].x; }
 	}
 
 	for(int ii=0; ii<(NX*NY/4); ii++)
-	{	
+	{
 		//if (ii%(NX/2) == 0){fprintf (fp,"\n");}
 		u_out[ii].x = u_out[ii].x / max_data * 255.0;
 		//fprintf (fp,"%.0f\t", u_in_fft[ii].x);
@@ -378,12 +378,12 @@ void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, 
         fseek(imageFile, BITS_PER_PIXEL_OFFSET, SEEK_SET);
         fread(&bitsPerPixel, 2, 1, imageFile);
         *bytesPerPixel = ((int32)bitsPerPixel) / 8;
- 
+
         int paddedRowSize = (int)(4 * ceil((float)(*width) / 4.0f))*(*bytesPerPixel);
         int unpaddedRowSize = (*width)*(*bytesPerPixel);
 		int totalSize = unpaddedRowSize*(*height);
 		cout << "BMP FILE: " << fileName << " | Width: " << *width << " | Height: " << *height << " | Total Size: " << totalSize << " | BitsPerPixel: " << bitsPerPixel << endl;
-		
+
 		*pixels = (byte*)malloc(totalSize);
         int i = 0;
         byte *currentRowPointer = *pixels+((*height-1)*unpaddedRowSize);
@@ -393,7 +393,7 @@ void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, 
             fread(currentRowPointer, 1, unpaddedRowSize, imageFile);
             currentRowPointer -= unpaddedRowSize;
         }
-		
+
 
         fclose(imageFile);
 }
@@ -453,7 +453,20 @@ int main(int argc, char *argv[])
     int32 height;
     int32 bytesPerPixel;
 	ReadImage( argv[8], &pixels, &width, &height,&bytesPerPixel);
-	//cout << *pixels;
+
+	byte* Image_Red = (byte *) malloc ( sizeof(byte)* width * height);
+	byte* Image_Green = (byte *) malloc ( sizeof(byte)* width * height);
+	byte* Image_Blue = (byte *) malloc ( sizeof(byte)* width * height);
+
+	int iterator = 0;
+	for(int i=0; i<(height*width)*3; i+=3)
+	{
+		Image_Red[iterator]	= pixels[i];
+		Image_Green[iterator] = pixels[i+1];
+		Image_Blue[iterator] = pixels[i+2];
+		iterator++;
+	}
+
 	free(pixels);
 
 	// --- Import TXT file with image --- //
@@ -502,36 +515,36 @@ int main(int argc, char *argv[])
 
 	cufftDoubleComplex* dData;
 	cudaMalloc((void **) &dData, sizeof(cufftDoubleComplex)* NX * NY);
-	
+
 	if (cudaGetLastError() != cudaSuccess){
 		fprintf(stderr, "Cuda error: Failed to allocate: Allocate Cuda Memory\n");
 		return -1;
 	}
-	
+
 	size_t pitch1;
 
 	u_in_in_big(u_in, data, NX, NY, multi);
-	
+
 	// --- Liczenie U_in = FFT{u_in} --- //
  	cudaMallocPitch(&dData, &pitch1, sizeof(cufftDoubleComplex)*NX, NY);
 	cudaMemcpy2D(dData,pitch1,data,sizeof(cufftDoubleComplex)*NX,sizeof(cufftDoubleComplex)*NX,NX,cudaMemcpyHostToDevice);
-	
+
 	if (cudaGetLastError() != cudaSuccess){
 		fprintf(stderr, "Cuda error: Failed to allocate: Calculate FFT{u_in}\n");
-		return -1;	
+		return -1;
 	}
-	
-	if (FFT_Z2Z(dData, NX, NY) == -1) { 
-		return -1; 
+
+	if (FFT_Z2Z(dData, NX, NY) == -1) {
+		return -1;
 	}
 	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
-		
-	
+
+
 	// --- Liczenie hz --- //
 	cufftDoubleComplex* hz_tab;
 	hz_tab = (cufftDoubleComplex *) malloc ( sizeof(cufftDoubleComplex)* NX * NY);
 	hz(lam, z, k, sampling, NX, NY, hz_tab);
-			
+
 
 	// --- Liczenie hz = FFT{hz_tab} --- //
 	cufftDoubleComplex* hz;
@@ -543,16 +556,16 @@ int main(int argc, char *argv[])
 
 	if(cudaGetLastError() != cudaSuccess){
 		fprintf(stderr, "Cuda error: Failed to allocate: FFT{hz_tab}\n");
-		return -1;	
+		return -1;
 	}
 
-	if (FFT_Z2Z(hz, NX, NY) == -1) { 
-		return -1; 
+	if (FFT_Z2Z(hz, NX, NY) == -1) {
+		return -1;
 	}
 
 	// --- Do the actual multiplication --- //
 	multiplyElementwise<<<NX*NY, 1>>>(dData, hz, NX*NY);
-	
+
 
 	// --- Liczenie u_out = iFFT{dData = U_OUT} --- //
 	if(IFFT_Z2Z(dData, NX, NY) == -1) { return -1; }
@@ -560,7 +573,7 @@ int main(int argc, char *argv[])
 	cudaMemcpy(data, dData, sizeof(cufftDoubleComplex)*NX*NY, cudaMemcpyDeviceToHost);
 
 	//printf( "\nCUFFT vals: \n");
-	
+
 
 	// --- ROLL cwiartek, zeby wszystko sie zgadzalo na koniec --- //
 
@@ -594,5 +607,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-
