@@ -34,7 +34,7 @@ Makefile for compilation: [Makefile](https://github.com/Samox1/Light-Propagation
 
 ### Start Command: <br>
 Template command: [XXX]$ ./cudaOpenMP BMP_in Multi Z_in Lambda Sampling <br>
-Example command:  [XXX]$ ./cudaOpenMP Test_NTO_1024.BMP 2 500.0 633.0 10.0 <br>
+Example command:  [XXX]$ ./cudaOpenMP Test_NTO_1024.bmp 2 500.0 633.0 10.0 <br>
 
 BMP_in - BMP file as "HOLE" <br>
 Multi - Multiplier for temporary array (usually =2) (int) <br>
