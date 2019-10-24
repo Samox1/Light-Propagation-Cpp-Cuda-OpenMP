@@ -33,14 +33,15 @@ Makefile for compilation: [Makefile](https://github.com/Samox1/Light-Propagation
 <br>
 
 ### Start Command: <br>
-[XXX]$ ./cudaOpenMP BMP_in Multi Z_in Lambda Sampling <br><br>
+Template command: [XXX]$ ./cudaOpenMP BMP_in Multi Z_in Lambda Sampling <br>
+Example command:  [XXX]$ ./cudaOpenMP Test_NTO_1024.BMP 2 500.0 633.0 10.0 <br>
 
 BMP_in - BMP file as "HOLE" <br>
-Multi - Multiplier for temporary array (usually =2) <br>
-Z_in - Propagation Distance in milimeters [mm] <br>
-Lambda - Wavelength in nanometers [nm] <br>
-Sampling - Space between each pixels in micrometers [microm] <br><br>
+Multi - Multiplier for temporary array (usually =2) (int) <br>
+Z_in - Propagation Distance in milimeters [mm] (double) <br>
+Lambda - Wavelength in nanometers [nm] (double) <br>
+Sampling - Space between each pixels in micrometers [microm] (double) <br><br>
 
-### Output File: <br><br>
+### Output File: <br>
 Template for Output file: z_%.3lf-m_lam_%.1lf-nm_samp_%.1lf-micro.BMP  <br>
 Example output file: z_0.500-m_lam_450.0-nm_samp_10.0-micro.BMP  <br>
