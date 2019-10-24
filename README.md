@@ -44,4 +44,4 @@ Sampling - Space between each pixels in micrometers [microm] (double) <br><br>
 
 ### Output File: <br>
 Template for Output file: z_%.3lf-m_lam_%.1lf-nm_samp_%.1lf-micro.BMP  <br>
-Example output file: z_0.500-m_lam_450.0-nm_samp_10.0-micro.BMP  <br>
+Example output file:      z_0.500-m_lam_450.0-nm_samp_10.0-micro.BMP  <br>
