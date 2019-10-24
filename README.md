@@ -19,14 +19,14 @@ Program w skrócie wykonuje się w następujących krokach:
 10. Ostateczny wynik zostaje zapisany do pliku w postaci amplitudy.
 
 ### TO DO LIST:
-[x] - ...
-[x] - ...
-[x] - ...
+[x] ...
+[x] ...
+[x] ...
 
 
 ## Kompilacja i uruchamianie programu: 
-Code for calculations of Light Propagation is in cudaOpenMP.cu <br><br>
-### Compile Command: <br><br>
+Code for calculations of Light Propagation is in: [cudaOpenMP.cu](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/cudaOpenMP.cu) <br>
+### Compile Command: <br>
 (#wkleić linię kompilacji i sprawdzić czy działa)
 <br>
 ### Start Command: <br><br>
