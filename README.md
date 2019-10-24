@@ -1,7 +1,7 @@
 # Light Propagation using Convolution Propagation Method and GPU    
 ## Project uses C++ and CUDA (and OpenMP in future)
-Author: Szymon Baczyński (Warsaw University of Technology)
-Date: 24.10.2019
+Author: Szymon Baczyński (Warsaw University of Technology) <br>
+Date: 24.10.2019 <br><br>
 
 
 Projekt opierający się o komunikację MPI i bibliotekę CUDA, by wykorzystać pełny potencjał obliczeniowy klastra DWARF wydziału Fizyki PW. <br />
@@ -19,24 +19,28 @@ Program w skrócie wykonuje się w następujących krokach:
 10. Ostateczny wynik zostaje zapisany do pliku w postaci amplitudy.
 
 ### TO DO LIST:
-[x] ...
-[x] ...
-[x] ...
+- [x] ...
+- [x] ...
+- [x] ...
 
 
 ## Kompilacja i uruchamianie programu: 
 Code for calculations of Light Propagation is in: [cudaOpenMP.cu](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/cudaOpenMP.cu) <br>
+Makefile for compilation: [Makefile](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/Makefile)<br>
+
 ### Compile Command: <br>
 (#wkleić linię kompilacji i sprawdzić czy działa)
 <br>
-### Start Command: <br><br>
-[XXX]$ mpirun -n NP prop.x TABLICA_WEJSCIOWA NX NY M <br><br>
 
-BMP_in - liczba procesów MPI, której chcemy użyć <br>
-TABLICA_WEJSCIOWA - tablica zawierająca rozkład przezrocza <br>
-NX, NY - rozmiary tablicy wejściowej <br>
-M - mnożnik tablic użytych do obliczeń (ile razy większe mają być NX i NY) <br><br>
+### Start Command: <br>
+[XXX]$ ./cudaOpenMP BMP_in Multi Z_in Lambda Sampling <br><br>
+
+BMP_in - BMP file as "HOLE" <br>
+Multi - Multiplier for temporary array (usually =2) <br>
+Z_in - Propagation Distance in milimeters [mm] <br>
+Lambda - Wavelength in nanometers [nm] <br>
+Sampling - Space between each pixels in micrometers [microm] <br><br>
 
 ### Output File: <br><br>
-Template for Output file:   <br>
-Example output file:   <br>
+Template for Output file: z_%.3lf-m_lam_%.1lf-nm_samp_%.1lf-micro.BMP  <br>
+Example output file: z_0.500-m_lam_450.0-nm_samp_10.0-micro.BMP  <br>
