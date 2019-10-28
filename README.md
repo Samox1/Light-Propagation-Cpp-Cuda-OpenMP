@@ -1,4 +1,4 @@
-# Light Propagation using Convolution Propagation Method and GPU    
+# Light Propagation using Modified Convolution Propagation Method and GPU    
 ## Project uses C++ and CUDA (and OpenMP in future)
 Author: Szymon Baczyński (Warsaw University of Technology) <br>
 Date: 24.10.2019 <br><br>
