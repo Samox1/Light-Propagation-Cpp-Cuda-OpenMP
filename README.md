@@ -26,7 +26,7 @@ The program is briefly carried out in the following steps ([paper](https://githu
 - [ ] Slice STL files
 
 
-## Kompilacja i uruchamianie programu: 
+## Compilation, Launch and Output of the program: 
 Code for calculations of Light Propagation is in: [cudaOpenMP.cu](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/cudaOpenMP.cu) <br>
 Makefile for compilation (from CUDA example): [Makefile](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/Makefile)<br>
 
@@ -34,7 +34,7 @@ Makefile for compilation (from CUDA example): [Makefile](https://github.com/Samo
 /usr/local/cuda/bin/nvcc -ccbin g++ -I../../common/inc  -m64    -Xcompiler -fopenmp -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_37,code=sm_37 -gencode arch=compute_50,code=sm_50 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 -gencode arch=compute_61,code=sm_61 -gencode arch=compute_70,code=sm_70 -gencode arch=compute_75,code=sm_75 -gencode arch=compute_75,code=compute_75 -o cudaOpenMP -c cudaOpenMP.cu -lgomp -lcufft
 <br>
 
-### Start Command: <br>
+### Launch Command: <br>
 ##### Template command: [XXX]$ ./cudaOpenMP BMP_in Multi Z_in Lambda Sampling <br>
 ##### Example command:  [XXX]$ ./cudaOpenMP Test_NTO_1024.bmp 2 500.0 633.0 10.0 <br>
 
