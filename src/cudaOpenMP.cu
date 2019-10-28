@@ -581,13 +581,13 @@ int main(int argc, char *argv[])
 	char filename[128];
 	snprintf ( filename, 128, "z_%.3lf-m_lam_%.1lf-nm_samp_%.1lf-micro.BMP", z, lam*(pow(10.0,(9))), sampling*(pow(10.0,(6))));
 	FILE* fp = fopen(filename,"wb");
-	
+
 	// --- Przeliczanie Amplitudy i Zapis do pliku --- //
 	//amplitude_print(u_out, NX, NY, fp);
 	BMP_Save_Amplitude(u_out, NX, NY, fp);
 
 	fclose(fp);
-
+	
 	// --- Zwalnianie pamieci --- //
 	cudaFree(u_out);
 	cudaFree(data);
