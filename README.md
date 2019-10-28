@@ -10,7 +10,7 @@ The program is briefly carried out in the following steps:
 4. The Fast Fourier Transform (FFT) of the input table is counted on the GPU.
 5. CPU calculates a two-dimensional impulse response table (h(z) - depending on the propagation distance z) and sends it to the GPU.
 6. GPU calculate the FFT of the impulse response and then multiply the input table transform with the impulse response transform.
-7. The result of multiplication is subjected to the Inverse Fourier Transform. After performing the IFT, its result is copied from the GPU to the host.
+7. The result of multiplication is subjected to the Inverse Fourier Transform. After performing the IFFT, its result is copied from the GPU to the host.
 8. The resulting data table is subjected to the ROLL operation - quadrant swapping for the correct result.
 9. The final result is saved to a file (BMP - Grayscale) in the form of an amplitude.
 
