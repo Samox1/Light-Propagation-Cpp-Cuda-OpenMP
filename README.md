@@ -3,7 +3,7 @@
 Author: Szymon Baczyński (Warsaw University of Technology) <br>
 Date: 24.10.2019 <br><br>
 
-The program is briefly carried out in the following steps:
+The program is briefly carried out in the following steps ([paper](https://github.com/Samox1/Propagation-C-CUDA-NTO-2019/blob/master/B_01_199504_OptComm.PDF)):
 1. Creation of a two-dimensional array with BMP-defined dimensions (the array is a slide through which light will propagate).
 2. Enter the table created in step 1 to X (usually twice) as large a table (smaller table placed in the center of a larger one).
 3. The newly created table (now called the input table) is copied to the graphics card (GPU).
@@ -21,6 +21,7 @@ The program is briefly carried out in the following steps:
 - [x] Export TXT file after calculations
 - [x] Import BMP (take only Green channel)
 - [x] Export BMP (as Grayscale)
+- [x] Check CUDA compatible devices
 - [ ] Clean Code
 - [ ] Slice STL files
 
