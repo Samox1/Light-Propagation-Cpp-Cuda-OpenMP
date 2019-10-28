@@ -45,15 +45,6 @@ __global__ void multiplyElementwise(cufftDoubleComplex* f0, cufftDoubleComplex* 
 }
 
 
-// void u_in_in_big(double* u_in, cufftDoubleComplex* data, int NX, int NY, int multi);
-// void h_z(double lam, double z, double k, double sampling, int NX, int NY, cufftDoubleComplex* h_z_cutab);
-// void Q_roll(cufftDoubleComplex* u_in_fft, cufftDoubleComplex* data, int NX, int NY);
-// void amplitude_print(cufftDoubleComplex* u_in_fft, int NX, int NY, FILE* fp);
-// int FFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
-// int IFFT_Z2Z(cufftDoubleComplex* dData, int NX, int NY);
-
-
-
 // ----------------------------------------------------------------------------------------------------------------------------------------------- //
 // --- Functions --- Functions --- Functions --- Functions --- Functions --- Functions --- Functions --- Functions --- Functions --- Functions --- //
 // ----------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -400,6 +391,7 @@ void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, 
 
 
 /*
+ * compile: /usr/local/cuda/bin/nvcc -ccbin g++ -I../../common/inc -m64 -Xcompiler -fopenmp -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_37,code=sm_37 -gencode arch=compute_50,code=sm_50 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 -gencode arch=compute_61,code=sm_61 -gencode arch=compute_70,code=sm_70 -gencode arch=compute_75,code=sm_75 -gencode arch=compute_75,code=compute_75 -o cudaOpenMP -c cudaOpenMP.cu -lgomp -lcufft
  * start program: ./cudaOpenMP Test_NTO_1024.bmp 2 500.0 633.0 10.0
  * start program: ./cudaOpenMP plik_z_przezroczem.BMP  Multiply_tmp  Odleglosc_Z_mm  Dl_fali_Lambda_nm  Sampling_micro
  */
@@ -410,15 +402,9 @@ void ReadImage(const char *fileName,byte **pixels, int32 *width, int32 *height, 
 int main(int argc, char *argv[])
 {
 
-    cout << "Welcome to CUDA test" << endl;
+    cout << "Light Propagation using Convolution Propagation Method and GPU" << endl;
 
-    //int COL = atoi(argv[2]);
-	//int ROW = atoi(argv[3]);
-
-	//double* u_in;
-	//u_in = (double *) malloc ( sizeof(double)* COL * ROW);
-
-	cout << "WELCOME" << " | " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << endl;
+	cout << "WELCOME: " << argv[0] << " | " << argv[1] << " | " << argv[2] << " | " << argv[3] << " | " << atoi(argv[4]) << " | " << atoi(argv[5]) << endl;
 
 	printf("\n---------------------------\n");
 	// --- PC Specs finder --- //
@@ -466,28 +452,6 @@ int main(int argc, char *argv[])
 
 	int32 COL = width;
 	int32 ROW = height;
-
-	// --- Import TXT file with image --- //
-	// ifstream inputFile;
-    // inputFile.open(argv[1]);
-
-    // if (inputFile)
-	// {
-	// 	cout << "Import file: " << argv[1] << endl;
-	// 	int i,j = 0;
-	// 	for (i = 0; i < ROW; i++)
-	// 	{
-	// 		for (j = 0; j < COL; j++)
-	// 		{
-	// 			inputFile >> u_in[i*ROW+j];
-	// 		}
-	// 	}
-	// 	cout << "Import file - complete" << endl;
-	// } else {
-	// 	cout << "Error opening the file.\n";
-	// }
-	// inputFile.close();
-
 
 	int multi = atoi(argv[2]);
 	int NX = COL*multi;
