@@ -3,32 +3,33 @@
 Author: Szymon Baczyński (Warsaw University of Technology) <br>
 Date: 24.10.2019 <br><br>
 
+The program is briefly carried out in the following steps:
+1. Creation of a two-dimensional array with BMP-defined dimensions (the array is a slide through which light will propagate).
+2. Enter the table created in step 1 to X (usually twice) as large a table (smaller table placed in the center of a larger one).
+3. The newly created table (now called the input table) is copied to the graphics card (GPU).
+4. The Fast Fourier Transform (FFT) of the input table is counted on the GPU.
+5. CPU calculates a two-dimensional impulse response table (h(z) - depending on the propagation distance z) and sends it to the GPU.
+6. GPU calculate the FFT of the impulse response and then multiply the input table transform with the impulse response transform.
+7. The result of multiplication is subjected to the Inverse Fourier Transform. After performing the IFT, its result is copied from the GPU to the host.
+8. The resulting data table is subjected to the ROLL operation - quadrant swapping for the correct result.
+9. The final result is saved to a file (BMP - Grayscale) in the form of an amplitude.
 
-Projekt opierający się o komunikację MPI i bibliotekę CUDA, by wykorzystać pełny potencjał obliczeniowy klastra DWARF wydziału Fizyki PW. <br />
-
-Program w skrócie wykonuje się w następujących krokach:
-1.  Stworzenie dwuwymiarowej tablicy o wymiarach zadanych przez użytkownika (tablica ta jest przezroczem, przez które będzie propagować się światło).
-2.  Wpisanie tablicy utworzonej w punkcie 1 do dwa razy większej tablicy (mniejsza tablica umieszczona w środku większej).
-3.  Nowo utworzona tablica (od teraz nazywana tablicą wejściową) kopiowana jest na kartę graficzną (GPU).
-4.  Na GPU liczona jest szybka transformata Fouriera (FFT) tablicy wejściowej.
-5.  Wynik wysyłany jest do procesów MPI, który następnie kopiowany jest na GPU.
-6.  Każdy proces oblicza dwuwymiarową tablicę odpowiedzi impulsowej (h(z) - zależna od odległości propagacji z) i wysyła ją na GPU.
-7.  GPU obliczają FFT odpowiedzi impulsowej, a następnie mnożą transformatę tablicy wejściowej z transformatą odpowiedzi impulsowej.
-8.  Wynik mnożenia zostaje poddany odwrotnej transformacie Fouriera. Po wykonaniu odwrotnej transformaty, jej wynik kopiowany jest z GPU na hosta.
-9.  Otrzymana tablica danych zostaje poddana operacji ROLL - zamiana miejscami ćwiartek, dla prawidłowego wyniku. 
-10. Ostateczny wynik zostaje zapisany do pliku w postaci amplitudy.
 
 ### TO DO LIST:
-- [x] ...
-- [x] ...
-- [x] ...
+- [x] Import TXT file with "HOLE" as 0-255 Grayscale
+- [x] Perform calculation on CPU and GPU (CUDA)
+- [x] Export TXT file after calculations
+- [x] Import BMP (take only Green channel)
+- [x] Export BMP (as Grayscale)
+- [ ] Clean Code
+- [ ] Slice STL files
 
 
 ## Kompilacja i uruchamianie programu: 
 Code for calculations of Light Propagation is in: [cudaOpenMP.cu](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/cudaOpenMP.cu) <br>
-Makefile for compilation: [Makefile](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/Makefile)<br>
+Makefile for compilation (from CUDA example): [Makefile](https://github.com/Samox1/Light-Propagation-Cpp-Cuda-OpenMP/blob/master/src/Makefile)<br>
 
-### Compile Command: <br>
+### Simple Compile Command: <br>
 /usr/local/cuda/bin/nvcc -ccbin g++ -I../../common/inc  -m64    -Xcompiler -fopenmp -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_37,code=sm_37 -gencode arch=compute_50,code=sm_50 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 -gencode arch=compute_61,code=sm_61 -gencode arch=compute_70,code=sm_70 -gencode arch=compute_75,code=sm_75 -gencode arch=compute_75,code=compute_75 -o cudaOpenMP1 -c cudaOpenMP.cu -lgomp -lcufft
 <br>
 
